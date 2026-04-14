@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHull Queue - Professional Log Manager</title>
+
+<style>
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background:#f4f7f6;
+  display:flex;
+  justify-content:center;
+  padding:20px;
+}
+.container {
+  background:white;
+  padding:2rem;
+  border-radius:12px;
+  box-shadow:0 4px 15px rgba(0,0,0,0.1);
+  width:100%;
+  max-width:1150px;
+}
+h2 {
+  text-align:center;
+  border-bottom:3px solid #1a73e8;
+  padding-bottom:10px;
+  margin-bottom:20px;
+}
+.input-group {
+  display:flex;
+  gap:10px;
+  margin-bottom:20px;
+}
+input {
+  flex:1;
+  padding:12px;
+  border-radius:8px;
+  border:2px solid #ddd;
+}
+.add-btn {
+  background:#1a73e8;
+  color:white;
+  border:none;
+  border-radius:8px;
+  padding:10px 25px;
+  font-weight:bold;
+  cursor:pointer;
+}
+table {
+  width:100%;
+  border-collapse:collapse;
+}
+th, td {
+  padding:14px;
+  text-align:center;
+  border-bottom:1px solid #eee;
+}
+th {
+  background:#f8f9fa;
+  font-size:.75rem;
+  text-transform:uppercase;
+}
+.status-pill {
+  padding:6px 12px;
+  border-radius:20px;
+  font-size:.8rem;
+  font-weight:bold;
+}
+.waiting { background:#eee; color:#666; }
+.ongoing { background:#e3f2fd; color:#1565c0; border:1px solid #1565c0; }
+.done { background:#e8f5e9; color:#2e7d32; }
+
+.btn-group {
+  display:flex;
+  gap:6px;
+  justify-content:center;
+}
+.action-btn {
+  padding:6px 12px;
+  border:none;
+  border-radius:4px;
+  cursor:pointer;
+  font-size:.75rem;
+  font-weight:bold;
+  color:white;
+}
+.btn-og { background:#17a2b8; }
+.btn-done { background:#28a745; }
+.btn-pass { background:#6c757d; }
+.btn-delete { background:#dc3545; }
+
+.time-text, .result-text {
+  font-family:monospace;
+  font-weight:bold;
+}
+</style>
+
+<!-- ✅ SUPABASE SDK (CORRECT) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = "https://dpozdmlfmyqikesgjiur.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwb3pkbWxmbXlxaWtlc2dqaXVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMjQ2NjYsImV4cCI6MjA5MTYwMDY2Nn0.a60aUUFBP-4HaGKKxfwpRJKk73Z8WNJX_N_G3SMuJso";
+
+const supabaseClient = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
+</script>
+</head>
+
+<body>
+<div class="container">
+  <h2>SHull Queue Controller</h2>
+
+  <div class="input-group">
+    <input id="nameInput" placeholder="SmartHULL User">
+    <button class="add-btn" onclick="addToQueue()">Add to Queue</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Start</th>
+        <th>End</th>
+        <th>Status</th>
+        <th>Remarks</th>
+        <th>Time Consumed</th>
+      </tr>
+    </thead>
+    <tbody id="queueBody"></tbody>
+  </table>
+</div>
+
+<script>
+let queueBody, nameInput, currentData = [];
+
+/* ✅ FIXED EMAIL RECIPIENTS */
+const EMAIL_TO = "reponte michelle mhe <michelle.mhe.reponte@tsuneishi.com>; daniel maria elizabeth <maria.elizabeth.daniel@tsuneishi.com>; oacan rolly <rolly.oacan@tsuneishi.com>; abejar jomar <jomar.abejar@tsuneishi.com>; barbero beverly marie <beverly.marie.barbero@tsuneishi.com>; lastrado leonard joshua <leonard.joshua.lastrado@tsuneishi.com>; tenebro christian lieg <christian.lieg.tenebro@tsuneishi.com>; bedico joseph roi <joseph.roi.bedico@tsuneishi.com>; lacuna carlo <carlo.lacuna@tsuneishi.com>; saludo ma. fatima <ma.fatima.saludo@tsuneishi.com>; rabanes angelie <angelie.rabanes@tsuneishi.com>; solon joseph <joseph.solon@tsuneishi.com>; calledo juancho <juancho.calledo@tsuneishi.com>; pagula john mark <john.mark.pagula@tsuneishi.com>; sotto jason <jason.sotto@tsuneishi.com>; dayot jerson <jerson.dayot@tsuneishi.com>; luca leanne grace <leanne.grace.luca@tsuneishi.com>; juablar charwin <charwin.juablar@tsuneishi.com>; mallorca riza mae <riza.mae.mallorca@tsuneishi.com>; montes shawn rey <shawn.rey.montes@tsuneishi.com>; fernandez aljohn <aljohn.fernandez@tsuneishi.com>; arobo john gualbert <john.gualbert.arobo@tsuneishi.com>; colegado mark anthony <mark.anthony.colegado@tsuneishi.com>";
+const EMAIL_CC = "";
+
+/* ✅ Outlook mail helper */
+function openOutlookEmail(subject, body) {
+  let mailto = `mailto:${encodeURIComponent(EMAIL_TO)}`;
+  let params = [];
+
+  if (EMAIL_CC && EMAIL_CC.trim() !== "") {
+    params.push(`cc=${encodeURIComponent(EMAIL_CC)}`);
+  }
+
+  params.push(`subject=${encodeURIComponent(subject)}`);
+  params.push(`body=${encodeURIComponent(body)}`);
+
+  mailto += `?${params.join("&")}`;
+  window.open(mailto, "_blank");
+}
+
+
+window.onload = () => {
+  queueBody = document.getElementById("queueBody");
+  nameInput = document.getElementById("nameInput");
+
+  // ✅ Add via Enter key
+  nameInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      addToQueue();
+    }
+  });
+
+  loadFromDB();
+  setInterval(loadFromDB, 30000);
+};
+
+function calculateDiff(ms) {
+  let s=Math.floor(ms/1000), m=Math.floor(s/60), h=Math.floor(m/60);
+  s%=60; m%=60;
+  if(!h && !m) return `${s} secs`;
+  if(!h) return `${m}:${s.toString().padStart(2,"0")} mins`;
+  return `${h}:${m.toString().padStart(2,"0")}:${s.toString().padStart(2,"0")} hr`;
+}
+
+async function loadFromDB() {
+  const { data } = await supabaseClient
+    .from("queue")
+    .select("*")
+    .order("sort_order", { ascending:true });
+
+  if(!Array.isArray(data)) return;
+  currentData = data;
+  queueBody.innerHTML = "";
+  data.forEach(createRow);
+}
+
+function createRow(item) {
+  const id = Number(item.id);
+  const hasOngoing = currentData.some(r => r.status === "On-going");
+  let actions = "";
+
+  if(item.status === "Waiting") {
+    if(!hasOngoing) {
+      actions += `<button class="action-btn btn-og" onclick="setOngoing(${id})">On-going</button>`;
+    }
+    actions += `
+      <button class="action-btn btn-pass" onclick="passRow(${id})">Pass</button>
+      <button class="action-btn btn-delete" onclick="deleteRow(${id})">X</button>
+    `;
+  } else if(item.status === "On-going") {
+    actions = `<button class="action-btn btn-done" onclick="setDone(${id})">Done</button>`;
+  }
+
+  queueBody.innerHTML += `
+    <tr>
+      <td><strong>${item.name}</strong></td>
+      <td class="time-text">${item.start_time ?? "--"}</td>
+      <td class="time-text">${item.end_time ?? "--"}</td>
+      <td><span class="status-pill ${item.status.toLowerCase().replace("-","")}">${item.status}</span></td>
+      <td><div class="btn-group">${actions}</div></td>
+      <td class="result-text">${item.time_consumed ?? "--"}</td>
+    </tr>`;
+}
+
+async function addToQueue() {
+  const name = nameInput.value.trim();
+  if(!name) return;
+
+  await supabaseClient.from("queue").insert([{
+    name,
+    status:"Waiting",
+    sort_order:Date.now()
+  }]);
+
+  nameInput.value="";
+  loadFromDB();
+}
+
+/* ✅ ON-GOING → EMAIL */
+async function setOngoing(id) {
+  const row = currentData.find(r => r.id === id);
+  if(currentData.some(r => r.status === "On-going")) {
+    alert("Finish active task first.");
+    return;
+  }
+
+  const now = new Date();
+  await supabaseClient.from("queue").update({
+    status:"On-going",
+    start_time: now.toLocaleTimeString(),
+    started_at: now.getTime()
+  }).eq("id",id);
+
+  openOutlookEmail(
+    `Smarthull License - ON-GOING: ${row.name}`,
+    `Process ON-GOING.\n\nUser: ${row.name}\nStart: ${now.toLocaleTimeString()}\n\n— SHull Queue https://macc-da.github.io/SHull-Queue-Logs/`
+  );
+
+  loadFromDB();
+}
+
+/* ✅ DONE → EMAIL */
+async function setDone(id) {
+  const row = currentData.find(r => r.id === id);
+  const now = new Date();
+  const consumed = calculateDiff(now.getTime() - row.started_at);
+
+  await supabaseClient.from("queue").update({
+    status:"Done",
+    end_time: now.toLocaleTimeString(),
+    time_consumed: consumed
+  }).eq("id",id);
+
+  openOutlookEmail(
+    `Smarthull License - Completed: ${row.name}`,
+    `Process COMPLETED.\n\nUser: ${row.name}\nStart: ${row.start_time}\nEnd: ${now.toLocaleTimeString()}\nTime: ${consumed}\n\n— SHull Queue https://macc-da.github.io/SHull-Queue-Logs/`
+  );
+
+  loadFromDB();
+}
+
+/* ✅ PASS → EMAIL */
+async function passRow(id) {
+  const row = currentData.find(r => r.id === id);
+
+  await supabaseClient.from("queue").update({
+    status:"Waiting",
+    start_time:null,
+    end_time:null,
+    started_at:null,
+    time_consumed:null,
+    sort_order:Date.now()
+  }).eq("id",id);
+
+  openOutlookEmail(
+    `Smarthull License - Passed: ${row.name}`,
+    `PASSED.\n\nUser: ${row.name}\nAction: Returned to queue\n\n— SHull Queue https://macc-da.github.io/SHull-Queue-Logs/`
+  );
+
+  loadFromDB();
+}
+
+async function deleteRow(id) {
+  if(!confirm("Delete this record?")) return;
+  await supabaseClient.from("queue").delete().eq("id",id);
+  loadFromDB();
+}
+</script>
+</body>
+</html>
