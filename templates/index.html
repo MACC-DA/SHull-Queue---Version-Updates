@@ -47,13 +47,14 @@
         .ongoing-pill { background: #fff; color: #333; border: 1px solid #ccc; }
         .remark-pill { background: #b0c4de; color: #4682b4; padding: 8px 25px; border-radius: 12px; font-weight: bold; }
 
-        /* Action Buttons from Reference Image */
+        /* Action Buttons */
         .btn-group { display: flex; gap: 8px; justify-content: center; }
         .action-btn { border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; color: white; font-weight: bold; font-size: 0.85rem; min-width: 40px; }
         .btn-og { background: #17a2b8; } /* Teal */
         .btn-pass { background: #6c757d; } /* Grey */
         .btn-del { background: #dc3545; } /* Red */
         .btn-done { background: #28a745; }
+        .locked-msg { color: #888; font-size: 0.75rem; font-weight: normal; }
     </style>
 </head>
 <body>
@@ -108,19 +109,30 @@
 </div>
 
 <script>
+    // Configuration
     const SUPABASE_URL = "https://dpozdmlfmyqikesgjiur.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwb3pkbWxmbXlxaWtlc2dqaXVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMjQ2NjYsImV4cCI6MjA5MTYwMDY2Nn0.a60aUUFBP-4HaGKKxfwpRJKk73Z8WNJX_N_G3SMuJso";
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    // Get logged-in user context from Flask
+    const loggedInUser = "{{ nickname }}";
+
     async function loadData() {
         const { data } = await supabase.from('queue').select('*').order('sort_order', { ascending: true });
+        renderDashboard(data || []);
+    }
+
+    function renderDashboard(data) {
         const qBody = document.getElementById('queueBody');
         const sBody = document.getElementById('spotlightBody');
         
         qBody.innerHTML = '';
         sBody.innerHTML = '<tr><td colspan="4" style="color:#999; padding:20px;">No active task</td></tr>';
 
-        data?.forEach(item => {
+        data.forEach(item => {
+            const isActualUser = (item.name === loggedInUser);
+
+            // --- Update Spotlight ---
             if (item.status === 'On-going') {
                 sBody.innerHTML = `
                     <tr>
@@ -129,49 +141,92 @@
                         <td>Waiting<br>30s</td>
                         <td>
                             <div class="btn-group">
-                                <button class="action-btn btn-og" onclick="setDone(${item.id})">On-going</button>
-                                <button class="action-btn btn-pass" onclick="passRow(${item.id})">Pass</button>
-                                <button class="action-btn btn-del" onclick="deleteRow(${item.id})">X</button>
+                                ${isActualUser ? `
+                                    <button class="action-btn btn-og" onclick="setDone(${item.id})">On-going</button>
+                                    <button class="action-btn btn-pass" onclick="passRow(${item.id})">Pass</button>
+                                    <button class="action-btn btn-del" onclick="deleteRow(${item.id})">X</button>
+                                ` : '<span class="locked-msg">Locked</span>'}
                             </div>
                         </td>
                     </tr>
                 `;
             }
 
+            // --- Update Main Queue ---
             const isDone = item.status === 'Done';
+            const isWaiting = item.status === 'Waiting';
+            
+            let remarkContent = '';
+            if (isDone) {
+                remarkContent = '<span class="remark-pill">Completed</span>';
+            } else if (isWaiting && isActualUser) {
+                remarkContent = `
+                    <div class="btn-group">
+                        <button class="action-btn btn-og" onclick="setOngoing(${item.id})">On-going</button>
+                        <button class="action-btn btn-pass" onclick="passRow(${item.id})">Pass</button>
+                        <button class="action-btn btn-del" onclick="deleteRow(${item.id})">X</button>
+                    </div>
+                `;
+            }
+
             qBody.innerHTML += `
                 <tr>
                     <td class="name-cell">${item.name}</td>
                     <td>${item.start_time || '--'}</td>
                     <td>${item.end_time || '--'}</td>
                     <td><span class="status-pill ${item.status.toLowerCase().replace('-','')}">${item.status}</span></td>
-                    <td>${isDone ? '<span class="remark-pill">Completed</span>' : ''}</td>
+                    <td>${remarkContent}</td>
                     <td>${item.time_consumed || '--'}</td>
                 </tr>
             `;
         });
     }
 
+    // Database Actions
     async function addToQueue() {
-        const name = "{{ nickname }}";
-        await supabase.from('queue').insert([{ name, status: 'Waiting', sort_order: Date.now() }]);
+        await supabase.from('queue').insert([{ name: loggedInUser, status: 'Waiting', sort_order: Date.now() }]);
         loadData();
     }
 
     async function setOngoing(id) {
+        if(currentData.some(r => r.status === 'On-going')) return alert("Finish current active task first.");
         const now = new Date();
-        await supabase.from('queue').update({ status: 'On-going', start_time: now.toLocaleTimeString(), started_at: now.getTime() }).eq('id', id);
+        await supabase.from('queue').update({ 
+            status: 'On-going', 
+            start_time: now.toLocaleTimeString(), 
+            started_at: now.getTime() 
+        }).eq('id', id);
         loadData();
     }
 
     async function setDone(id) {
+        const row = currentData.find(r => r.id === id);
         const now = new Date();
-        await supabase.from('queue').update({ status: 'Done', end_time: now.toLocaleTimeString() }).eq('id', id);
+        const consumed = row.started_at ? Math.floor((now.getTime() - row.started_at)/1000) + "s" : "--";
+        await supabase.from('queue').update({ 
+            status: 'Done', 
+            end_time: now.toLocaleTimeString(), 
+            time_consumed: consumed 
+        }).eq('id', id);
         loadData();
     }
 
+    async function passRow(id) {
+        await supabase.from('queue').update({ sort_order: Date.now() }).eq('id', id);
+        loadData();
+    }
+
+    async function deleteRow(id) {
+        if(confirm("Delete this record?")) {
+            await supabase.from('queue').delete().eq('id', id);
+            loadData();
+        }
+    }
+
+    // Initialization
+    let currentData = [];
     window.onload = loadData;
-    setInterval(loadData, 15000);
+    setInterval(loadData, 10000);
 </script>
 </body>
 </html>
