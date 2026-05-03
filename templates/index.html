@@ -4,85 +4,222 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SHull Queue Controller</title>
+    <!-- Supabase Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 40px; color: #333; }
         .container { background: white; padding: 2.5rem; border-radius: 40px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); width: 100%; max-width: 1150px; position: relative; }
+        
+        /* Header & Logout */
         .header-top { display: flex; justify-content: flex-end; margin-bottom: -10px; }
-        .logout-btn { background: #4a76c0; color: white; border: none; border-radius: 8px; padding: 8px 20px; font-weight: bold; text-decoration: none; font-size: 0.9rem; }
-        h2 { text-align: center; font-size: 2rem; margin: 10px 0 20px 0; border-bottom: 3px solid #4a76c0; padding-bottom: 10px; }
+        .logout-btn { background: #4a76c0; color: white; border: none; border-radius: 8px; padding: 8px 20px; font-weight: bold; text-decoration: none; font-size: 0.9rem; transition: background 0.3s; }
+        .logout-btn:hover { background: #35589a; }
+
+        h2 { text-align: center; font-size: 2rem; margin: 10px 0 20px 0; font-weight: 800; border-bottom: 3px solid #4a76c0; padding-bottom: 10px; color: #4a76c0; }
+
         .dashboard-top { display: flex; gap: 30px; margin-bottom: 40px; }
-        .user-panel { flex: 1; padding: 10px; }
+        
+        /* Sidebar User Panel */
+        .user-panel { flex: 1; padding: 10px; border-right: 1px solid #eee; }
         .user-panel p { margin: 8px 0; font-weight: bold; font-size: 1.1rem; }
-        .user-panel .label { width: 65px; display: inline-block; }
-        .user-panel .sub-text { color: #aaa; font-size: 0.9rem; display: block; margin-left: 70px; font-weight: normal; margin-top: -5px; }
-        .add-btn { background: #4a76c0; color: white; border: none; border-radius: 12px; padding: 15px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 20px; }
-        .current-user-card { flex: 3; background: #e8e8e8; border-radius: 20px; padding: 20px; }
+        .user-panel .label { width: 65px; display: inline-block; color: #666; }
+        .user-panel .sub-text { color: #aaa; font-size: 0.9rem; display: block; margin-left: 70px; font-weight: normal; margin-top: -5px; font-style: italic; }
+        .add-btn { background: #4a76c0; color: white; border: none; border-radius: 12px; padding: 15px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 20px; font-size: 1.1rem; box-shadow: 0 4px 10px rgba(74, 118, 192, 0.3); }
+
+        /* Current Task Spotlight */
+        .current-user-card { flex: 3; background: #e8e8e8; border-radius: 20px; padding: 20px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+        .current-user-card h4 { margin: 0 0 15px 0; font-size: 0.95rem; font-weight: bold; text-transform: uppercase; color: #555; }
         .spotlight-table { width: 100%; border-collapse: collapse; }
-        .spotlight-table th { font-size: 0.8rem; color: #444; text-align: center; border-bottom: 1px solid #bbb; padding: 8px; }
+        .spotlight-table th { font-size: 0.8rem; color: #444; text-align: center; padding: 8px; border-bottom: 1px solid #bbb; }
+        .spotlight-table td { padding: 15px 8px; text-align: center; vertical-align: middle; font-weight: bold; }
+
+        /* Queue Table */
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        thead th { background: #f8f9fa; font-size: 0.8rem; padding: 15px; text-align: center; }
-        tbody td { padding: 18px 15px; text-align: center; border-bottom: 1px solid #eee; font-weight: 600; }
-        .name-cell { text-align: left; padding-left: 30px; }
+        thead th { background: #f8f9fa; color: #444; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; padding: 15px; border-bottom: 2px solid #dee2e6; }
+        tbody td { padding: 18px 15px; text-align: center; border-bottom: 1px solid #eee; font-size: 1rem; font-weight: 600; }
+        .name-cell { text-align: left; padding-left: 30px; text-transform: uppercase; color: #4a76c0; }
+
+        /* Status Pills & Buttons */
+        .status-pill { padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; }
+        .ongoing { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+        .waiting { background: #e2e3e5; color: #383d41; }
+        .done { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        
         .btn-group { display: flex; gap: 8px; justify-content: center; }
-        .action-btn { border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; color: white; font-weight: bold; font-size: 0.85rem; }
-        .btn-og { background: #17a2b8; } .btn-pass { background: #6c757d; } .btn-del { background: #dc3545; }
+        .action-btn { border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; color: white; font-weight: bold; font-size: 0.8rem; }
+        .btn-og { background: #17a2b8; } /* Ongoing */
+        .btn-pass { background: #6c757d; } /* Pass */
+        .btn-del { background: #dc3545; } /* Delete */
+        .locked-msg { color: #aaa; font-size: 0.75rem; font-weight: normal; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header-top">
-            <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+
+<div class="container">
+    <div class="header-top">
+        <!-- Route defined in app.py -->
+        <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+    </div>
+    
+    <h2>SHull Queue Controller</h2>
+
+    <div class="dashboard-top">
+        <!-- Sidebar with dynamic Python variables -->
+        <div class="user-panel">
+            <p><span class="label">TCN :</span> <span>{{ tcn }}</span></p>
+            <p><span class="label">User :</span> <span>{{ nickname }}</span></p>
+            <span class="sub-text">{{ first_name }} {{ last_name }}</span>
+            <button class="add-btn" onclick="addToQueue()">Add to Queue</button>
         </div>
-        <h2>SHull Queue Controller</h2>
-        <div class="dashboard-top">
-            <div class="user-panel">
-                <p><span class="label">TCN :</span> <span>{{ tcn }}</span></p>
-                <p><span class="label">User :</span> <span>{{ nickname }}</span></p>
-                <span class="sub-text">{{ first_name }} {{ last_name }}</span>
-                <button class="add-btn" onclick="addToQueue()">Add to Queue</button>
-            </div>
-            <div class="current-user-card">
-                <h4>Current User:</h4>
-                <table class="spotlight-table">
-                    <thead><tr><th>Name</th><th>Start</th><th>Status</th><th>Remarks</th></tr></thead>
-                    <tbody id="spotlightBody"></tbody>
-                </table>
-            </div>
+
+        <!-- Spotlight for the active user -->
+        <div class="current-user-card">
+            <h4>Current User:</h4>
+            <table class="spotlight-table">
+                <thead>
+                    <tr><th>Name</th><th>Start</th><th>Status</th><th>Action</th></tr>
+                </thead>
+                <tbody id="spotlightBody">
+                    <tr><td colspan="4" style="color:#999; padding:20px;">Loading active tasks...</td></tr>
+                </tbody>
+            </table>
         </div>
-        <table>
-            <thead><tr><th style="text-align:left; padding-left:30px;">Name</th><th>Start</th><th>End</th><th>Status</th><th>Remarks</th><th>Time</th></tr></thead>
-            <tbody id="queueBody"></tbody>
-        </table>
     </div>
 
-    <script>
-        const supabase = window.supabase.createClient("https://varjyniqlnttcuvmwvvz.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhcmp5bmlxbG50dGN1dm13dnZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxMzc1MzksImV4cCI6MjA5MTcxMzUzOX0.OLOQdw2TBP-xzCdEXGL21jRIFh2s9bNiokr23qYwv1c");
-        const loggedInUser = "{{ nickname }}";
+    <!-- Main Queue Table -->
+    <table>
+        <thead>
+            <tr>
+                <th style="text-align:left; padding-left:30px;">Name</th>
+                <th>Start</th>
+                <th>End</th>
+                <th>Status</th>
+                <th>Remarks / Actions</th>
+                <th>Duration</th>
+            </tr>
+        </thead>
+        <tbody id="queueBody"></tbody>
+    </table>
+</div>
 
-        async function loadData() {
-            const { data } = await supabase.from('queue').select('*').order('sort_order', { ascending: true });
-            const qBody = document.getElementById('queueBody');
-            const sBody = document.getElementById('spotlightBody');
-            qBody.innerHTML = '';
-            sBody.innerHTML = '<tr><td colspan="4">No active task</td></tr>';
+<script>
+    // Supabase Configuration
+    const SUPABASE_URL = "https://varjyniqlnttcuvmwvvz.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhcmp5bmlxbG50dGN1dm13dnZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxMzc1MzksImV4cCI6MjA5MTcxMzUzOX0.OLOQdw2TBP-xzCdEXGL21jRIFh2s9bNiokr23qYwv1c";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-            data?.forEach(item => {
-                const isOwner = item.name === loggedInUser;
-                if (item.status === 'On-going') {
-                    sBody.innerHTML = `<tr><td>${item.name}</td><td>${item.start_time}</td><td>Waiting</td><td>
-                        ${isOwner ? `<button class="action-btn btn-del" onclick="setDone(${item.id})">Done</button>` : 'Locked'}</td></tr>`;
-                }
-                qBody.innerHTML += `<tr><td class="name-cell">${item.name}</td><td>${item.start_time || '--'}</td><td>${item.end_time || '--'}</td><td>${item.status}</td><td>${isOwner && item.status === 'Waiting' ? `<button class="action-btn btn-og" onclick="setOngoing(${item.id})">On-going</button>` : ''}</td><td>${item.time_consumed || '--'}</td></tr>`;
-            });
+    // Get the current logged-in nickname from Python template
+    const loggedInUser = "{{ nickname }}";
+
+    async function loadData() {
+        const { data, error } = await supabase
+            .from('queue')
+            .select('*')
+            .order('sort_order', { ascending: true });
+
+        if (error) {
+            console.error("Error fetching data:", error);
+            return;
         }
 
-        async function addToQueue() { await supabase.from('queue').insert([{ name: loggedInUser, status: 'Waiting', sort_order: Date.now() }]); loadData(); }
-        async function setOngoing(id) { const now = new Date(); await supabase.from('queue').update({ status: 'On-going', start_time: now.toLocaleTimeString(), started_at: now.getTime() }).eq('id', id); loadData(); }
-        async function setDone(id) { const now = new Date(); await supabase.from('queue').update({ status: 'Done', end_time: now.toLocaleTimeString() }).eq('id', id); loadData(); }
+        renderUI(data || []);
+    }
 
-        window.onload = loadData;
-        setInterval(loadData, 10000);
-    </script>
+    function renderUI(queueData) {
+        const qBody = document.getElementById('queueBody');
+        const sBody = document.getElementById('spotlightBody');
+        
+        qBody.innerHTML = '';
+        sBody.innerHTML = '<tr><td colspan="4" style="color:#999; padding:20px;">No active task</td></tr>';
+
+        queueData.forEach(item => {
+            const isOwner = (item.name === loggedInUser);
+            const statusClass = item.status.toLowerCase().replace('-', '');
+
+            // 1. Update Spotlight if status is 'On-going'
+            if (item.status === 'On-going') {
+                sBody.innerHTML = `
+                    <tr>
+                        <td>${item.name}</td>
+                        <td>${item.start_time}</td>
+                        <td><span class="status-pill ongoing">ON-GOING</span></td>
+                        <td>
+                            ${isOwner ? `
+                                <div class="btn-group">
+                                    <button class="action-btn btn-og" onclick="updateStatus(${item.id}, 'Done')">Done</button>
+                                    <button class="action-btn btn-pass" onclick="passTask(${item.id})">Pass</button>
+                                </div>` : '<span class="locked-msg">Locked</span>'}
+                        </td>
+                    </tr>`;
+            }
+
+            // 2. Build Main Table Rows
+            const actionSection = (item.status === 'Done') ? '<span style="color:#28a745;">✓ Finished</span>' : 
+                                 (isOwner && item.status === 'Waiting' ? `
+                                    <div class="btn-group">
+                                        <button class="action-btn btn-og" onclick="updateStatus(${item.id}, 'On-going')">Start</button>
+                                        <button class="action-btn btn-del" onclick="deleteTask(${item.id})">Remove</button>
+                                    </div>` : (isOwner ? '' : '<span class="locked-msg">—</span>'));
+
+            qBody.innerHTML += `
+                <tr>
+                    <td class="name-cell">${item.name}</td>
+                    <td>${item.start_time || '--'}</td>
+                    <td>${item.end_time || '--'}</td>
+                    <td><span class="status-pill ${statusClass}">${item.status.toUpperCase()}</span></td>
+                    <td>${actionSection}</td>
+                    <td>${item.time_consumed || '--'}</td>
+                </tr>`;
+        });
+    }
+
+    // --- Database Operations ---
+
+    async function addToQueue() {
+        await supabase.from('queue').insert([{ 
+            name: loggedInUser, 
+            status: 'Waiting', 
+            sort_order: Date.now() 
+        }]);
+        loadData();
+    }
+
+    async function updateStatus(id, newStatus) {
+        const now = new Date();
+        const updateData = { status: newStatus };
+        
+        if (newStatus === 'On-going') {
+            updateData.start_time = now.toLocaleTimeString();
+            updateData.started_at = now.getTime();
+        } else if (newStatus === 'Done') {
+            const row = (await supabase.from('queue').select('*').eq('id', id).single()).data;
+            updateData.end_time = now.toLocaleTimeString();
+            if (row.started_at) {
+                const diff = Math.floor((now.getTime() - row.started_at) / 1000);
+                updateData.time_consumed = diff + "s";
+            }
+        }
+
+        await supabase.from('queue').update(updateData).eq('id', id);
+        loadData();
+    }
+
+    async function passTask(id) {
+        // Move to the end of the queue by updating sort_order
+        await supabase.from('queue').update({ sort_order: Date.now(), status: 'Waiting' }).eq('id', id);
+        loadData();
+    }
+
+    async function deleteTask(id) {
+        if (confirm("Remove this entry from the queue?")) {
+            await supabase.from('queue').delete().eq('id', id);
+            loadData();
+        }
+    }
+
+    // Initial Load & Auto-Refresh
+    window.onload = loadData;
+    setInterval(loadData, 10000); // Sync every 10 seconds
+</script>
 </body>
 </html>
