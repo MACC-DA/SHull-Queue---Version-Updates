@@ -9,52 +9,46 @@
         body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 40px; color: #333; }
         .container { background: white; padding: 2.5rem; border-radius: 40px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); width: 100%; max-width: 1150px; position: relative; }
         
-        /* Logout Header */
         .header-top { display: flex; justify-content: flex-end; margin-bottom: -10px; }
-        .logout-btn { background: #4a76c0; color: white; border: none; border-radius: 8px; padding: 8px 20px; font-weight: bold; text-decoration: none; font-size: 0.9rem; transition: opacity 0.2s; }
-        .logout-btn:hover { opacity: 0.8; }
+        .logout-btn { background: #4a76c0; color: white; border: none; border-radius: 8px; padding: 8px 20px; font-weight: bold; text-decoration: none; font-size: 0.9rem; }
 
         h2 { text-align: center; font-size: 2rem; margin: 10px 0 20px 0; font-weight: 800; border-bottom: 3px solid #4a76c0; padding-bottom: 10px; }
 
-        /* Dashboard Layout */
         .dashboard-top { display: flex; gap: 30px; margin-bottom: 40px; }
         
-        /* Left Panel */
+        /* Sidebar Info */
         .user-panel { flex: 1; padding: 10px; }
         .user-panel p { margin: 8px 0; font-weight: bold; font-size: 1.1rem; }
         .user-panel .label { width: 65px; display: inline-block; }
         .user-panel .sub-text { color: #aaa; font-size: 0.9rem; display: block; margin-left: 70px; font-weight: normal; margin-top: -5px; }
         .add-btn { background: #4a76c0; color: white; border: none; border-radius: 12px; padding: 15px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 20px; font-size: 1.1rem; box-shadow: 0 4px 10px rgba(74, 118, 192, 0.3); }
 
-        /* Spotlight Panel (Current User) */
+        /* Spotlight Card */
         .current-user-card { flex: 3; background: #e8e8e8; border-radius: 20px; padding: 20px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
         .current-user-card h4 { margin: 0 0 15px 0; font-size: 0.95rem; font-weight: bold; }
         .spotlight-table { width: 100%; border-collapse: collapse; }
         .spotlight-table th { font-size: 0.8rem; color: #444; text-align: center; padding: 8px; border-bottom: 1px solid #bbb; }
         .spotlight-table td { padding: 15px 8px; text-align: center; vertical-align: middle; }
-        .timer-note { font-size: 0.8rem; text-align: center; margin-top: 15px; color: #555; font-style: normal; }
+        .timer-note { font-size: 0.8rem; text-align: center; margin-top: 15px; color: #555; }
 
-        /* Main Table */
+        /* Queue Table */
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        thead th { background: #f8f9fa; color: #444; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; padding: 15px; text-align: center; }
+        thead th { background: #f8f9fa; color: #444; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; padding: 15px; }
         tbody td { padding: 18px 15px; text-align: center; border-bottom: 1px solid #eee; font-size: 1rem; font-weight: 600; }
         .name-cell { text-align: left; padding-left: 30px; text-transform: uppercase; }
 
-        /* Status & Remarks */
-        .status-pill { padding: 6px 18px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; border: 1px solid transparent; }
+        /* Status & Buttons */
+        .status-pill { padding: 6px 18px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; }
         .waiting { background: #eee; color: #888; }
         .done { background: #e8f5e9; color: #4caf50; border: 1px solid #4caf50; }
-        .ongoing-pill { background: #fff; color: #333; border: 1px solid #ccc; }
         .remark-pill { background: #b0c4de; color: #4682b4; padding: 8px 25px; border-radius: 12px; font-weight: bold; }
-
-        /* Action Buttons */
+        
         .btn-group { display: flex; gap: 8px; justify-content: center; }
-        .action-btn { border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; color: white; font-weight: bold; font-size: 0.85rem; min-width: 40px; }
+        .action-btn { border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; color: white; font-weight: bold; font-size: 0.85rem; }
         .btn-og { background: #17a2b8; } /* Teal */
         .btn-pass { background: #6c757d; } /* Grey */
         .btn-del { background: #dc3545; } /* Red */
-        .btn-done { background: #28a745; }
-        .locked-msg { color: #888; font-size: 0.75rem; font-weight: normal; }
+        .locked-msg { color: #999; font-size: 0.75rem; font-weight: normal; }
     </style>
 </head>
 <body>
@@ -68,8 +62,8 @@
 
     <div class="dashboard-top">
         <div class="user-panel">
-            <p><span class="label">TCN :</span> <span id="displayTCN">{{ tcn }}</span></p>
-            <p><span class="label">User :</span> <span id="displayNickname">{{ nickname }}</span></p>
+            <p><span class="label">TCN :</span> <span>{{ tcn }}</span></p>
+            <p><span class="label">User :</span> <span>{{ nickname }}</span></p>
             <span class="sub-text">{{ first_name }} {{ last_name }}</span>
             <button class="add-btn" onclick="addToQueue()">Add to Queue</button>
         </div>
@@ -85,9 +79,7 @@
                         <th>Remarks</th>
                     </tr>
                 </thead>
-                <tbody id="spotlightBody">
-                    <!-- Data injected here via JS -->
-                </tbody>
+                <tbody id="spotlightBody"></tbody>
             </table>
             <div class="timer-note">Note: If there is no response within 30 seconds, it will proceed to the next user.</div>
         </div>
@@ -109,40 +101,38 @@
 </div>
 
 <script>
-    // Configuration
-    const SUPABASE_URL = "https://dpozdmlfmyqikesgjiur.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwb3pkbWxmbXlxaWtlc2dqaXVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMjQ2NjYsImV4cCI6MjA5MTYwMDY2Nn0.a60aUUFBP-4HaGKKxfwpRJKk73Z8WNJX_N_G3SMuJso";
+    const SUPABASE_URL = "https://varjyniqlnttcuvmwvvz.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhcmp5bmlxbG50dGN1dm13dnZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxMzc1MzksImV4cCI6MjA5MTcxMzUzOX0.OLOQdw2TBP-xzCdEXGL21jRIFh2s9bNiokr23qYwv1c";
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Get logged-in user context from Flask
     const loggedInUser = "{{ nickname }}";
+    let currentQueueData = [];
 
     async function loadData() {
         const { data } = await supabase.from('queue').select('*').order('sort_order', { ascending: true });
-        renderDashboard(data || []);
+        currentQueueData = data || [];
+        renderUI();
     }
 
-    function renderDashboard(data) {
+    function renderUI() {
         const qBody = document.getElementById('queueBody');
         const sBody = document.getElementById('spotlightBody');
-        
         qBody.innerHTML = '';
         sBody.innerHTML = '<tr><td colspan="4" style="color:#999; padding:20px;">No active task</td></tr>';
 
-        data.forEach(item => {
-            const isActualUser = (item.name === loggedInUser);
+        currentQueueData.forEach(item => {
+            const isOwner = (item.name === loggedInUser);
 
-            // --- Update Spotlight ---
             if (item.status === 'On-going') {
                 sBody.innerHTML = `
                     <tr>
-                        <td><strong>${item.name}</strong><br><small style="color:#777">User Detail</small></td>
+                        <td><strong>${item.name}</strong></td>
                         <td>${item.start_time}</td>
                         <td>Waiting<br>30s</td>
                         <td>
                             <div class="btn-group">
-                                ${isActualUser ? `
-                                    <button class="action-btn btn-og" onclick="setDone(${item.id})">On-going</button>
+                                ${isOwner ? `
+                                    <button class="action-btn btn-og" onclick="setDone(${item.id})">Done</button>
                                     <button class="action-btn btn-pass" onclick="passRow(${item.id})">Pass</button>
                                     <button class="action-btn btn-del" onclick="deleteRow(${item.id})">X</button>
                                 ` : '<span class="locked-msg">Locked</span>'}
@@ -152,22 +142,14 @@
                 `;
             }
 
-            // --- Update Main Queue ---
             const isDone = item.status === 'Done';
-            const isWaiting = item.status === 'Waiting';
-            
-            let remarkContent = '';
-            if (isDone) {
-                remarkContent = '<span class="remark-pill">Completed</span>';
-            } else if (isWaiting && isActualUser) {
-                remarkContent = `
-                    <div class="btn-group">
-                        <button class="action-btn btn-og" onclick="setOngoing(${item.id})">On-going</button>
-                        <button class="action-btn btn-pass" onclick="passRow(${item.id})">Pass</button>
-                        <button class="action-btn btn-del" onclick="deleteRow(${item.id})">X</button>
-                    </div>
-                `;
-            }
+            const actionSection = isDone ? '<span class="remark-pill">Completed</span>' : 
+                                 (isOwner && item.status === 'Waiting' ? `
+                                    <div class="btn-group">
+                                        <button class="action-btn btn-og" onclick="setOngoing(${item.id})">On-going</button>
+                                        <button class="action-btn btn-pass" onclick="passRow(${item.id})">Pass</button>
+                                        <button class="action-btn btn-del" onclick="deleteRow(${item.id})">X</button>
+                                    </div>` : '');
 
             qBody.innerHTML += `
                 <tr>
@@ -175,39 +157,30 @@
                     <td>${item.start_time || '--'}</td>
                     <td>${item.end_time || '--'}</td>
                     <td><span class="status-pill ${item.status.toLowerCase().replace('-','')}">${item.status}</span></td>
-                    <td>${remarkContent}</td>
+                    <td>${actionSection}</td>
                     <td>${item.time_consumed || '--'}</td>
                 </tr>
             `;
         });
     }
 
-    // Database Actions
     async function addToQueue() {
         await supabase.from('queue').insert([{ name: loggedInUser, status: 'Waiting', sort_order: Date.now() }]);
         loadData();
     }
 
     async function setOngoing(id) {
-        if(currentData.some(r => r.status === 'On-going')) return alert("Finish current active task first.");
+        if(currentQueueData.some(r => r.status === 'On-going')) return alert("Finish current active task first.");
         const now = new Date();
-        await supabase.from('queue').update({ 
-            status: 'On-going', 
-            start_time: now.toLocaleTimeString(), 
-            started_at: now.getTime() 
-        }).eq('id', id);
+        await supabase.from('queue').update({ status: 'On-going', start_time: now.toLocaleTimeString(), started_at: now.getTime() }).eq('id', id);
         loadData();
     }
 
     async function setDone(id) {
-        const row = currentData.find(r => r.id === id);
+        const row = currentQueueData.find(r => r.id === id);
         const now = new Date();
-        const consumed = row.started_at ? Math.floor((now.getTime() - row.started_at)/1000) + "s" : "--";
-        await supabase.from('queue').update({ 
-            status: 'Done', 
-            end_time: now.toLocaleTimeString(), 
-            time_consumed: consumed 
-        }).eq('id', id);
+        const diff = row.started_at ? Math.floor((now.getTime() - row.started_at)/1000) + "s" : "--";
+        await supabase.from('queue').update({ status: 'Done', end_time: now.toLocaleTimeString(), time_consumed: diff }).eq('id', id);
         loadData();
     }
 
@@ -217,14 +190,12 @@
     }
 
     async function deleteRow(id) {
-        if(confirm("Delete this record?")) {
+        if(confirm("Remove from queue?")) {
             await supabase.from('queue').delete().eq('id', id);
             loadData();
         }
     }
 
-    // Initialization
-    let currentData = [];
     window.onload = loadData;
     setInterval(loadData, 10000);
 </script>
