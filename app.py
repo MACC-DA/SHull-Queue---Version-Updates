@@ -6,7 +6,7 @@ app = Flask(__name__)
 # Secure key for session management
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "shull_2026_secure")
 
-# Supabase Connection
+# Supabase Connection pulled from Render Environment Variables
 url = os.environ.get("https://varjyniqlnttcuvmwvvz.supabase.co")
 key = os.environ.get("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhcmp5bmlxbG50dGN1dm13dnZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxMzc1MzksImV4cCI6MjA5MTcxMzUzOX0.OLOQdw2TBP-xzCdEXGL21jRIFh2s9bNiokr23qYwv1c")
 supabase: Client = create_client(url, key)
@@ -24,7 +24,7 @@ def index():
         if not res.data:
             return redirect(url_for('logout'))
         
-        # FLEXIBLE CASE FIX: Convert all DB keys to lowercase
+        # FLEXIBLE CASE FIX: Converts all DB keys to lowercase so HTML can read them
         raw_data = res.data[0]
         user_data = {k.lower(): v for k, v in raw_data.items()}
 
@@ -45,7 +45,7 @@ def login():
             res = supabase.table("users").select("*").eq("tcn", tcn_input).execute()
             if res.data:
                 user = res.data[0]
-                # Store in session (handles both tcn and TCN)
+                # Store in session (handles both tcn and TCN casing)
                 session['user_id'] = user.get('tcn') or user.get('TCN')
                 session['nickname'] = user.get('nickname') or user.get('Nickname')
                 return redirect(url_for('index'))
@@ -53,6 +53,14 @@ def login():
             print(f"Login error: {e}")
             
     return render_template('login.html')
+
+# UPDATED: Added this route to fix the "Not Found" error when clicking register
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        # Logic to save new staff details to Supabase can be added here
+        return redirect(url_for('login'))
+    return render_template('register.html')
 
 @app.route('/logout')
 def logout():
