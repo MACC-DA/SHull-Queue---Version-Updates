@@ -1,0 +1,123 @@
+:root {
+    --bg-light: #f5f6f8; /* Very light gray background */
+    --card-bg: #ffffff;
+    --text-main: #000000;
+    --input-border: #cccccc;
+    --input-bg: #ffffff;
+    --button-blue: #4c75c7; /* The specific blue from the image */
+    --button-hover: #3b60b0;
+    --msg-green: #28a745;
+    --msg-blue: #17a2b8;
+    --msg-red: #dc3545;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-light);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.shull-card {
+    background: var(--card-bg);
+    padding: 50px 60px;
+    border-radius: 30px; /* Precise rounded corner */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    width: 100%;
+    max-width: 650px; /* Match the proportion */
+    text-align: center;
+}
+
+.shull-card h1 {
+    font-size: 36px;
+    font-weight: 700;
+    margin-top: 0;
+    margin-bottom: 30px;
+    color: var(--text-main);
+}
+
+.shull-card h2 {
+    font-size: 20px;
+    font-weight: 700;
+    text-align: left;
+    margin-bottom: 25px;
+    color: var(--text-main);
+}
+
+.form-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    text-align: left;
+}
+
+.form-group label {
+    flex: 0 0 120px; /* Fixed label width for perfect alignment */
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--text-main);
+}
+
+.form-group input {
+    flex: 1; /* Input takes remaining space */
+    padding: 12px 15px;
+    border: 1px solid var(--input-border);
+    border-radius: 8px;
+    font-size: 16px;
+    background-color: var(--input-bg);
+    box-sizing: border-box;
+}
+
+/* Specific styling for placeholders seen in image_1.png */
+.form-group input::placeholder {
+    color: #aaaaaa;
+    font-style: normal;
+}
+
+.note-message {
+    font-size: 14px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.note-message.success { color: var(--msg-green); }
+.note-message.info    { color: var(--msg-blue); }
+.note-message.error   { color: var(--msg-red); }
+
+.button-container {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.shull-button {
+    background-color: var(--button-blue);
+    color: white;
+    padding: 15px 50px;
+    font-size: 20px;
+    font-weight: 700;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    min-width: 200px;
+}
+
+.shull-button:hover {
+    background-color: var(--button-hover);
+}
+
+.footer-link {
+    margin-top: 30px;
+    font-size: 14px;
+    color: #666;
+}
+
+.footer-link a {
+    color: var(--button-blue);
+    text-decoration: underline;
+}
