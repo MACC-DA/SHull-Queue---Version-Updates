@@ -3,9 +3,9 @@ from flask import Flask, render_template, request, redirect, url_for, session
 from supabase import create_client, Client
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("FLASK_SECRET_KEY", "shull_secure_key_2026")
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "shull_secure_2026")
 
-# Supabase Setup
+# Supabase Setup - Pulled from Render Environment Variables
 SUPABASE_URL = os.environ.get("https://varjyniqlnttcuvmwvvz.supabase.co")
 SUPABASE_KEY = os.environ.get("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhcmp5bmlxbG50dGN1dm13dnZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxMzc1MzksImV4cCI6MjA5MTcxMzUzOX0.OLOQdw2TBP-xzCdEXGL21jRIFh2s9bNiokr23qYwv1c")
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
@@ -17,43 +17,37 @@ def index():
 
     user_id = session.get('user_id')
     try:
-        # Fetch user details to show in sidebar
+        # Fetch user details using TCN
         response = supabase.table("users").select("*").eq("tcn", user_id).execute()
+        
         if not response.data:
             return redirect(url_for('logout'))
         
-        user = response.data[0]
+        # --- FLEXIBLE CASE-SENSITIVITY SOLUTION ---
+        # Converts keys like 'TCN' or 'First_Name' to 'tcn' and 'first_name'
+        raw_data = response.data[0]
+        user_data = {k.lower(): v for k, v in raw_data.items()}
+
         return render_template('index.html', 
-                               tcn=user.get('tcn'), 
-                               nickname=user.get('nickname'),
-                               first_name=user.get('first_name'), 
-                               last_name=user.get('last_name'))
+                               tcn=user_data.get('tcn'), 
+                               nickname=user_data.get('nickname'),
+                               first_name=user_data.get('first_name', ''), 
+                               last_name=user_data.get('last_name', ''))
     except Exception as e:
-        print(f"Index Error: {e}")
+        print(f"Error: {e}")
         return redirect(url_for('login'))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        tcn = request.form.get('tcn')
-        # Simple login logic: find user by TCN
-        response = supabase.table("users").select("*").eq("tcn", tcn).execute()
+        tcn_input = request.form.get('tcn')
+        response = supabase.table("users").select("*").eq("tcn", tcn_input).execute()
         if response.data:
             user = response.data[0]
-            if user.get('approved'):
-                session['user_id'] = user['tcn']
-                session['nickname'] = user['nickname']
-                return redirect(url_for('index'))
-            return "Account pending approval."
-        return "Invalid TCN."
+            session['user_id'] = user.get('tcn') or user.get('TCN')
+            session['nickname'] = user.get('nickname') or user.get('Nickname')
+            return redirect(url_for('index'))
     return render_template('login.html')
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        # Your registration logic here
-        return redirect(url_for('login'))
-    return render_template('register.html')
 
 @app.route('/logout')
 def logout():
