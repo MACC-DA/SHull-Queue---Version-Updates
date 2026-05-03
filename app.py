@@ -73,7 +73,6 @@ def logout():
 
 # --- FIX START HERE ---
 if __name__ == '__main__':
-    # Render requires the app to listen on 0.0.0.0 and a dynamic port
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
 # --- FIX END HERE ---
