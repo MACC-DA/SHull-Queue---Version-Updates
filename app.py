@@ -3,11 +3,12 @@ from supabase import create_client, Client
 import os
 
 app = Flask(__name__)
-app.secret_key = "SHull_Secret_Key_2026" # Change this to any random string
+# It is better to use an environment variable for the secret key as well
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "SHull_Secret_Key_2026")
 
-# Replace with your actual Supabase Credentials
-SUPABASE_URL = "https://your-project-id.supabase.co"
-SUPABASE_KEY = "your-anon-public-key"
+# Replace these with your actual credentials or use Environment Variables in Render
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://varjyniqlnttcuvmwvvz.supabase.co")
+SUPABASE_KEY = os.environ.get("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhcmp5bmlxbG50dGN1dm13dnZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxMzc1MzksImV4cCI6MjA5MTcxMzUzOX0.OLOQdw2TBP-xzCdEXGL21jRIFh2s9bNiokr23qYwv1c")
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 @app.route('/')
@@ -25,20 +26,18 @@ def login():
         tcn = request.form.get('tcn')
         nickname = request.form.get('nickname')
 
-        # Search Supabase for the user
         response = supabase.table("users").select("*").eq("tcn", tcn).eq("nickname", nickname).execute()
 
         if response.data:
-            # Check if admin has approved (Assuming a 'status' column in your DB)
             user_data = response.data[0]
             if user_data.get('approved') == False:
-                status = 'needs_approval' # Logic for login2.JPG
+                status = 'needs_approval' 
                 message = True
             else:
                 session['user_nickname'] = user_data['nickname']
                 return redirect(url_for('index'))
         else:
-            status = 'not_registered' # Logic for login3.JPG
+            status = 'not_registered'
             message = True
 
     return render_template('login.html', status=status, message=message)
@@ -51,18 +50,16 @@ def register():
         last_name = request.form.get('last_name')
         nickname = request.form.get('nickname')
 
-        # Insert into Supabase
         data = {
             "tcn": tcn,
             "first_name": first_name,
             "last_name": last_name,
             "nickname": nickname,
-            "approved": False # Default to false for login2.JPG scenario
+            "approved": False 
         }
         
         try:
             supabase.table("users").insert(data).execute()
-            # Redirect to login with a success message
             return render_template('login.html', status='registered', message=True)
         except Exception as e:
             return f"Error: {str(e)}"
@@ -74,5 +71,9 @@ def logout():
     session.pop('user_nickname', None)
     return redirect(url_for('login'))
 
+# --- FIX START HERE ---
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Render requires the app to listen on 0.0.0.0 and a dynamic port
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
+# --- FIX END HERE ---
